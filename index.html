@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Roster Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .navbar {
+            background-color: var(--secondary-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .search-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .roster-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .employee-info {
+            background-color: var(--light-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .employee-info h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .info-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            min-width: 120px;
+            color: var(--dark-color);
+        }
+        
+        .roster-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .roster-table th, .roster-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .roster-table th {
+            background-color: var(--secondary-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .roster-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .roster-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .shift-key {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .shift-key h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        .key-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .key-item:hover {
+            background-color: var(--light-color);
+            transform: translateX(5px);
+        }
+        
+        .key-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            margin-right: 15px;
+            border: 1px solid #ddd;
+        }
+        
+        .key-text {
+            font-size: 0.95rem;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #777;
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ccc;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .month-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background-color: var(--light-color);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        
+        .month-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin: 0;
+        }
+        
+        .btn-month {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-month:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-month:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status-cell {
+            font-weight: 600;
+        }
+        
+        /* Alert Styles */
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            max-width: 350px;
+        }
+        
+        .alert {
+            position: relative;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .alert-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .alert-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .alert-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .alert-info {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .alert-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        /* Roster Window Styles */
+        .roster-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            z-index: 1050;
+            display: none;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .roster-window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .roster-window-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin: 0;
+        }
+        
+        .roster-window-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+            transition: color 0.3s ease;
+        }
+        
+        .roster-window-close:hover {
+            color: var(--danger-color);
+        }
+        
+        .roster-window-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+            display: none;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-download {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-download:hover {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        /* For the image capture */
+        #rosterImageCapture {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 800px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Shift status colors */
+        .status-VI { background-color: #e3f2fd; }
+        .status-VJ { background-color: #fff8e1; }
+        .status-YY { background-color: #e8f5e9; }
+        .status-NB { background-color: #ffebee; }
+        .status-DF { background-color: #f3e5f5; }
+        .status-EX { background-color: #e0f7fa; }
+        .status-NR { background-color: #fff3e0; }
+        .status-DX { background-color: #e8eaf6; }
+        .status-NI { background-color: #f1f8e9; }
+    </style>
+</head>
+<body>
+    <!-- Alert Container -->
+    <div class="alert-container" id="alertContainer"></div>
+    
+    <!-- Roster Window Overlay -->
+    <div class="roster-window-overlay" id="rosterOverlay"></div>
+    
+    <!-- Roster Window -->
+    <div class="roster-window" id="rosterWindow">
+        <div class="roster-window-header">
+            <h3 class="roster-window-title">Employee Roster</h3>
+            <button class="roster-window-close" id="rosterWindowClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="rosterWindowContent">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Hidden div for image capture -->
+    <div id="rosterImageCapture"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-calendar-alt"></i>
+                Employee Roster Viewer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#key"><i class="fas fa-key"></i> Shift Key</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-question-circle"></i> Help</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Search Section -->
+        <div class="search-container">
+            <h2 class="mb-4"><i class="fas fa-search"></i> Find Your Roster</h2>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="employeeId" class="form-label">WE ONE ID or EK ID</label>
+                    <input type="text" class="form-control" id="employeeId" placeholder="Enter your ID">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department">
+                        <option value="">Select Department</option>
+                        <option value="DNATA">DNATA</option>
+                        <!-- Other departments will be loaded dynamically -->
+                    </select>
+                </div>
+            </div>
+            <button id="searchBtn" class="btn btn-primary">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+
+        <!-- Shift Key -->
+        <div class="shift-key" id="key">
+            <h3><i class="fas fa-key"></i> Shift Key</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="key-item">
+                        <div class="key-color status-VI"></div>
+                        <div class="key-text">VI - Vacation/Leave</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-VJ"></div>
+                        <div class="key-text">VJ - Vacation/Job</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-YY"></div>
+                        <div class="key-text">YY - (00:00-00:00)</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-NB"></div>
+                        <div class="key-text">NB - (06:00-19:00)</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="key-item">
+                        <div class="key-color status-DF"></div>
+                        <div class="key-text">DF - (18:00-07:00)</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-EX"></div>
+                        <div class="key-text">EX - (08:00-20:00)</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-NR"></div>
+                        <div class="key-text">NR - (20:00-08:00)</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-DX"></div>
+                        <div class="key-text">DX - (09:00-21:00)</div>
+                    </div>
+                    <div class="key-item">
+                        <div class="key-color status-NI"></div>
+                        <div class="key-text">NI - (21:00-09:00)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-calendar-alt"></i> Employee Roster Viewer</h5>
+                    <p>View your work schedule anytime, anywhere.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Home</a></li>
+                        <li><a href="#key" class="text-white">Shift Key</a></li>
+                        <li><a href="#" class="text-white">Help</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope"></i> support@rosterviewer.com</li>
+                        <li><i class="fas fa-phone"></i> +1 (555) 123-4567</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2025 Employee Roster Viewer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase and other JS libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnJ0m0QnNyC4pnv-dBEgC3yiq65YPwZvM",
+            authDomain: "weone-roster.firebaseapp.com",
+            databaseURL: "https://weone-roster-default-rtdb.firebaseio.com",
+            projectId: "weone-roster",
+            storageBucket: "weone-roster.firebasestorage.app",
+            messagingSenderId: "335364720116",
+            appId: "1:335364720116:web:ae669c448aba3788aca5a1",
+            measurementId: "G-Z8MBXC4ZFR"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // DOM elements
+        const employeeIdInput = document.getElementById('employeeId');
+        const departmentSelect = document.getElementById('department');
+        const searchBtn = document.getElementById('searchBtn');
+        const alertContainer = document.getElementById('alertContainer');
+        const rosterWindow = document.getElementById('rosterWindow');
+        const rosterOverlay = document.getElementById('rosterOverlay');
+        const rosterWindowClose = document.getElementById('rosterWindowClose');
+        const rosterWindowContent = document.getElementById('rosterWindowContent');
+        const rosterImageCapture = document.getElementById('rosterImageCapture');
+
+        // Global variables
+        let currentEmployee = null;
+        let currentMonth = 4; // May (0-indexed)
+        let currentYear = 2025;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        let departments = {};
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDepartments();
+            setupEventListeners();
+        });
+
+        function loadDepartments() {
+            database.ref('departments').once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    departments = data;
+                    // Update department dropdown
+                    departmentSelect.innerHTML = '<option value="">Select Department</option>';
+                    Object.keys(departments).forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept;
+                        option.textContent = dept;
+                        departmentSelect.appendChild(option);
+                    });
+                }
+            }).catch((error) => {
+                console.error("Error loading departments:", error);
+                showAlert('error', 'Error loading departments. Please try again later.');
+            });
+        }
+
+        function setupEventListeners() {
+            // Search button
+            searchBtn.addEventListener('click', searchEmployee);
+            
+            // Close roster window
+            rosterWindowClose.addEventListener('click', closeRosterWindow);
+            rosterOverlay.addEventListener('click', closeRosterWindow);
+            
+            // Allow search on Enter key
+            employeeIdInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchEmployee();
+                }
+            });
+        }
+
+        function searchEmployee() {
+            const employeeId = employeeIdInput.value.trim();
+            const department = departmentSelect.value;
+            
+            if (!employeeId) {
+                showAlert('warning', 'Please enter your WE ONE ID or EK ID');
+                return;
+            }
+            
+            if (!department) {
+                showAlert('warning', 'Please select your department');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // First, find the employee in the current month's roster
+            const monthYearKey = `${currentYear}-${currentMonth}`;
+            database.ref(`rosters/${department}/${monthYearKey}`).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Find employee by WE ONE ID or EK ID
+                    const employee = Object.values(data).find(emp => 
+                        (emp.weoneId && emp.weoneId.toString() === employeeId) || 
+                        (emp.ekId && emp.ekId.toString() === employeeId)
+                    );
+                    
+                    if (employee) {
+                        currentEmployee = employee;
+                        showAlert('success', 'Employee record found! Loading roster...');
+                        openRosterWindow(employee);
+                    } else {
+                        showAlert('error', 'No employee found with that ID in the selected department');
+                    }
+                } else {
+                    showAlert('error', 'No roster data available for the selected department and month');
+                }
+                showLoading(false);
+            }).catch((error) => {
+                showLoading(false);
+                console.error("Error searching for employee:", error);
+                showAlert('error', 'Error searching for employee. Please try again.');
+            });
+        }
+
+        function openRosterWindow(employee) {
+            // Set up the roster window content
+            const content = `
+                <div class="employee-info">
+                    <h3><i class="fas fa-user"></i> Employee Information</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">Name:</span>
+                                <span>${employee.name || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">WE ONE ID:</span>
+                                <span>${employee.weoneId || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <span class="info-label">EK ID:</span>
+                                <span>${employee.ekId || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Designation:</span>
+                                <span>${employee.designation || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="downloadRoster" class="btn btn-download">
+                        <i class="fas fa-download"></i> Download as Image
+                    </button>
+                </div>
+                
+                <div class="month-navigation">
+                    <button id="prevMonth" class="btn-month" disabled>
+                        <i class="fas fa-chevron-left"></i> Previous Month
+                    </button>
+                    <h3 class="month-title">${monthNames[currentMonth]} ${currentYear}</h3>
+                    <button id="nextMonth" class="btn-month">
+                        Next Month <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div id="rosterLoading" class="loading" style="display: none;">
+                    <div class="spinner-border text-primary spinner" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                
+                <div id="rosterContent">
+                    <table class="roster-table">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Date</th>
+                                <th>Shift</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterBody">
+                            ${renderRosterRows(employee.days || [])}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="noRosterData" class="no-data" style="display: none;">
+                    <i class="fas fa-calendar-times"></i>
+                    <h4>No Roster Data Found</h4>
+                    <p>We couldn't find any roster information for this employee.</p>
+                </div>
+            `;
+            
+            rosterWindowContent.innerHTML = content;
+            
+            // Set up event listeners for the new elements
+            document.getElementById('prevMonth').addEventListener('click', () => {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                updateRosterWindow();
+            });
+            
+            document.getElementById('nextMonth').addEventListener('click', () => {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                updateRosterWindow();
+            });
+
+            // Download roster as image
+            document.getElementById('downloadRoster').addEventListener('click', downloadRosterAsImage);
+            
+            // Show the window
+            rosterWindow.style.display = 'block';
+            rosterOverlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRosterWindow() {
+            rosterWindow.style.display = 'none';
+            rosterOverlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function updateRosterWindow() {
+            const rosterBody = document.getElementById('rosterBody');
+            const monthTitle = document.querySelector('.month-title');
+            const prevMonthBtn = document.getElementById('prevMonth');
+            const loadingDiv = document.getElementById('rosterLoading');
+            const noDataDiv = document.getElementById('noRosterData');
+            
+            // Update month title
+            monthTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Disable previous month button if we're at the earliest possible month
+            prevMonthBtn.disabled = currentMonth === 0 && currentYear === 2025;
+            
+            // Show loading
+            rosterBody.innerHTML = '';
+            loadingDiv.style.display = 'flex';
+            noDataDiv.style.display = 'none';
+            
+            // Load new data
+            const monthYearKey = `${currentYear}-${currentMonth}`;
+            const department = departmentSelect.value;
+            const employeeId = employeeIdInput.value.trim();
+            
+            database.ref(`rosters/${department}/${monthYearKey}`).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Find the employee again in case we switched months
+                    const employee = Object.values(data).find(emp => 
+                        (emp.weoneId && emp.weoneId.toString() === employeeId) || 
+                        (emp.ekId && emp.ekId.toString() === employeeId)
+                    );
+                    
+                    if (employee && employee.days) {
+                        rosterBody.innerHTML = renderRosterRows(employee.days);
+                    } else {
+                        noDataDiv.style.display = 'block';
+                    }
+                } else {
+                    noDataDiv.style.display = 'block';
+                }
+                loadingDiv.style.display = 'none';
+            }).catch((error) => {
+                loadingDiv.style.display = 'none';
+                console.error("Error loading roster data:", error);
+                showAlert('error', 'Error loading roster data. Please try again.');
+            });
+        }
+
+        function renderRosterRows(daysData) {
+            // Get number of days in the current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let rows = '';
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(currentYear, currentMonth, i);
+                const dayName = dayNames[date.getDay()];
+                const shiftCode = daysData[i - 1] || 'YY';
+                const shiftInfo = getShiftInfo(shiftCode);
+                
+                rows += `
+                    <tr>
+                        <td>${dayName}</td>
+                        <td>${i}</td>
+                        <td class="status-cell status-${shiftCode}" title="${shiftInfo.description}">
+                            ${shiftCode}
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            return rows;
+        }
+
+        function getShiftInfo(shiftCode) {
+            const shiftMap = {
+                'VI': { description: 'Vacation/Leave' },
+                'VJ': { description: 'Vacation/Job' },
+                'YY': { description: '00:00-00:00' },
+                'NB': { description: '06:00-19:00' },
+                'DF': { description: '18:00-07:00' },
+                'EX': { description: '08:00-20:00' },
+                'NR': { description: '20:00-08:00' },
+                'DX': { description: '09:00-21:00' },
+                'NI': { description: '21:00-09:00' }
+            };
+            
+            return shiftMap[shiftCode] || { description: 'Unknown shift' };
+        }
+
+        function downloadRosterAsImage() {
+            showAlert('info', 'Preparing your roster for download...');
+            
+            // Create a copy of the roster table with additional information
+            const captureDiv = document.getElementById('rosterImageCapture');
+            const employeeInfo = `
+                <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">Employee Roster - ${monthNames[currentMonth]} ${currentYear}</h2>
+                <div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <div><strong>Name:</strong> ${currentEmployee.name || '-'}</div>
+                        <div><strong>WE ONE ID:</strong> ${currentEmployee.weoneId || '-'}</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div><strong>EK ID:</strong> ${currentEmployee.ekId || '-'}</div>
+                        <div><strong>Designation:</strong> ${currentEmployee.designation || '-'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Clone the table and add to our capture div
+            const tableClone = document.querySelector('.roster-table').cloneNode(true);
+            captureDiv.innerHTML = employeeInfo;
+            captureDiv.appendChild(tableClone);
+            
+            // Use html2canvas to capture the image
+            html2canvas(captureDiv, {
+                scale: 2, // Higher quality
+                logging: false,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `roster_${currentEmployee.weoneId || currentEmployee.ekId}_${monthNames[currentMonth]}_${currentYear}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                showAlert('success', 'Roster downloaded successfully!');
+            }).catch(error => {
+                console.error('Error generating image:', error);
+                showAlert('error', 'Failed to download roster. Please try again.');
+            });
+        }
+
+        function showLoading(show) {
+            if (show) {
+                searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+                searchBtn.disabled = true;
+            } else {
+                searchBtn.innerHTML = '<i class="fas fa-search"></i> Search';
+                searchBtn.disabled = false;
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertTypes = {
+                'success': { icon: 'check-circle', title: 'Success!' },
+                'error': { icon: 'exclamation-circle', title: 'Error!' },
+                'warning': { icon: 'exclamation-triangle', title: 'Warning!' },
+                'info': { icon: 'info-circle', title: 'Info' }
+            };
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            
+            alertDiv.innerHTML = `
+                <i class="fas fa-${alertTypes[type].icon} alert-icon"></i>
+                <div>
+                    <strong>${alertTypes[type].title}</strong>
+                    <p class="mb-0">${message}</p>
+                </div>
+                <button class="alert-close">&times;</button>
+            `;
+            
+            const closeBtn = alertDiv.querySelector('.alert-close');
+            closeBtn.addEventListener('click', () => {
+                alertDiv.remove();
+            });
+            
+            alertContainer.appendChild(alertDiv);
+            
+            // Show the alert
+            setTimeout(() => {
+                alertDiv.classList.add('show');
+            }, 10);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
